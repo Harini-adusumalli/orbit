@@ -1,0 +1,35 @@
+# Ignore Python cache
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+
+# Ignore virtual environments
+venv/
+rasaenv/
+trash/
+
+# Ignore datasets
+*.csv
+*.tsv
+*.xlsx
+
+# Ignore logs
+*.log
+
+# Ignore IDE/editor settings
+.vscode/
+.idea/
+
+# Ignore system files
+.DS_Store
+Thumbs.db
+
+# Ignore build artifacts
+*.egg-info/
+dist/
+build/
+
+# Ignore secrets/config (if needed)
+config.py
+
