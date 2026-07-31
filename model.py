@@ -1,13 +1,24 @@
-# model.py
 from sentence_transformers import SentenceTransformer
 from config import MODEL_NAME
 
-# Load embedding model once when the application starts
-model = SentenceTransformer(MODEL_NAME)
+# Don't load the model immediately
+model = None
+
+
+def get_model():
+    global model
+
+    if model is None:
+        print("Loading embedding model...")
+        model = SentenceTransformer(MODEL_NAME)
+        print("Embedding model loaded!")
+
+    return model
+
 
 def get_embedding(text: str):
-    """Encode text into a vector embedding."""
-    # The 'query: ' prefix is a specific instruction for the e5-large-v2 model
-    # to format text for similarity search queries.
     query_text = f"query: {text.strip()}"
-    return model.encode(query_text).tolist()
+
+    embedding_model = get_model()
+
+    return embedding_model.encode(query_text).tolist()
