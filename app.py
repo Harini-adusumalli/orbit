@@ -2,7 +2,7 @@
 from flask import Flask
 from flask_cors import CORS
 from socket_events import socketio
-
+import os
 # --- STEP 1: Import ALL your blueprints ---
 from routes import routes
 from chat_routes import chat_api
@@ -31,9 +31,16 @@ def create_app():
     return app
 
 if __name__ == "__main__":
-    # Use socketio.run() to properly start the server
     print("Creating app...")
     app = create_app()
     print("App created successfully!")
     print("Starting server...")
-    socketio.run(app, host="0.0.0.0", port=5000, debug=True)
+
+    port = int(os.environ.get("PORT", 5000))
+
+    socketio.run(
+        app,
+        host="0.0.0.0",
+        port=port,
+        debug=False
+    )
