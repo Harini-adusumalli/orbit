@@ -1,13 +1,9 @@
 // lib/screens/bot_chat_screen.dart
+
 import 'package:flutter/material.dart';
 import 'package:orbit/services/api_service.dart';
-
-class ChatMessage {
-  final String text;
-  final bool isUser;
-
-  ChatMessage({required this.text, required this.isUser});
-}
+import 'package:orbit/theme/app_colors.dart';
+import 'package:orbit/theme/app_text_styles.dart';
 
 class ChatBotScreen extends StatefulWidget {
   const ChatBotScreen({super.key});
@@ -17,141 +13,320 @@ class ChatBotScreen extends StatefulWidget {
 }
 
 class _ChatBotScreenState extends State<ChatBotScreen> {
-  final TextEditingController _controller = TextEditingController();
-  final List<ChatMessage> _messages = [];
   final ApiService _apiService = ApiService();
-  bool _isLoading = false;
+
+  bool _loading = true;
+  bool _waiting = false;
+
+  String _menuTitle = "";
+  String _assistantReply = "";
+
+  List<dynamic> _options = [];
 
   @override
   void initState() {
     super.initState();
-    _messages.add(ChatMessage(
-      text: 'Hello! I am your AI assistant. How can I help you find the right alumni today?',
-      isUser: false,
-    ));
+    _loadMenu();
   }
 
-  Future<void> _sendMessage() async {
-    final text = _controller.text.trim();
-    if (text.isEmpty || _isLoading) return;
-
-    setState(() {
-      _messages.add(ChatMessage(text: text, isUser: true));
-      _isLoading = true;
-    });
-    _controller.clear();
-
+  Future<void> _loadMenu() async {
     try {
-      final history = _messages.map((m) {
-        return {"role": m.isUser ? "user" : "model", "parts": m.text};
-      }).toList();
-      
-      final response = await _apiService.postToGeminiChat(text, results: history);
+      final response = await _apiService.getAssistantMenu();
 
-      if (response.containsKey('response')) {
-        setState(() {
-          _messages.add(ChatMessage(text: response['response'], isUser: false));
-        });
-      } else {
-        _showError(response['error'] ?? 'An unknown error occurred.');
-      }
+      setState(() {
+        _menuTitle = response["menu_text"];
+        _options = response["options"];
+        _loading = false;
+      });
     } catch (e) {
-      _showError('Failed to connect to the server. Please try again.');
-    } finally {
-      if (mounted) {
-        setState(() {
-          _isLoading = false;
-        });
-      }
+      setState(() {
+        _loading = false;
+        _menuTitle = "Unable to load Orbit Guide.";
+      });
     }
   }
 
-  void _showError(String message) {
-     if(mounted) {
-        setState(() {
-          _messages.add(ChatMessage(text: message, isUser: false));
-        });
-     }
+  Future<void> _selectOption(
+    String optionId,
+    String label,
+  ) async {
+    setState(() {
+      _waiting = true;
+    });
+
+    try {
+      final response = await _apiService.askAssistant(optionId);
+
+      setState(() {
+        _assistantReply =
+            response["response"] ?? "No response available.";
+      });
+    } catch (e) {
+      setState(() {
+        _assistantReply =
+            "Unable to contact Orbit Guide.";
+      });
+    }
+
+    setState(() {
+      _waiting = false;
+    });
+  }
+
+  Widget _buildMenuCard(
+    IconData icon,
+    String label,
+    String id,
+  ) {
+    return InkWell(
+      borderRadius: BorderRadius.circular(20),
+      onTap: _waiting
+          ? null
+          : () => _selectOption(id, label),
+      child: Container(
+        margin: const EdgeInsets.symmetric(vertical: 8),
+        padding: const EdgeInsets.all(18),
+        decoration: BoxDecoration(
+          color: AppColors.card,
+          borderRadius: BorderRadius.circular(20),
+          boxShadow: const [
+            BoxShadow(
+              color: AppColors.shadow,
+              blurRadius: 8,
+              offset: Offset(0, 3),
+            )
+          ],
+        ),
+        child: Row(
+          children: [
+
+            CircleAvatar(
+              radius: 24,
+              backgroundColor: AppColors.primary,
+              child: Icon(
+                icon,
+                color: AppColors.white,
+              ),
+            ),
+
+            const SizedBox(width: 16),
+
+            Expanded(
+              child: Text(
+                label,
+                style: AppTextStyles.title,
+              ),
+            ),
+
+            const Icon(
+              Icons.arrow_forward_ios,
+              color: AppColors.textSecondary,
+              size: 18,
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  IconData _getIcon(String key) {
+    switch (key) {
+      case "search_alumni":
+        return Icons.search;
+
+      case "send_chat_request":
+        return Icons.chat_bubble_outline;
+
+      case "view_chats":
+        return Icons.forum_outlined;
+
+      case "notifications":
+        return Icons.notifications_none;
+
+      case "profile":
+        return Icons.person_outline;
+
+      case "signup_login":
+        return Icons.login;
+
+      default:
+        return Icons.help_outline;
+    }
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      // FIX: The AppBar property has been removed from here.
-      body: Column(
+      backgroundColor: AppColors.background,
+
+      appBar: AppBar(
+        backgroundColor: AppColors.background,
+        elevation: 0,
+        centerTitle: true,
+        iconTheme: const IconThemeData(
+          color: AppColors.textPrimary,
+        ),
+        title: Text(
+          "Orbit Guide",
+          style: AppTextStyles.title,
+        ),
+      ),
+
+      body: _loading
+          ? const Center(
+              child: CircularProgressIndicator(
+                color: AppColors.primary,
+              ),
+            )
+          : AnimatedSwitcher(
+              duration: const Duration(milliseconds: 300),
+              child: _assistantReply.isEmpty
+                  ? _buildMenuPage()
+                  : _buildResponsePage(),
+            ),
+    );
+  }
+
+  Widget _buildMenuPage() {
+    return SingleChildScrollView(
+      key: const ValueKey("menu"),
+      padding: const EdgeInsets.all(20),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Expanded(
-            child: ListView.builder(
-              padding: const EdgeInsets.all(16.0),
-              reverse: true,
-              itemCount: _messages.length,
-              itemBuilder: (context, index) {
-                final message = _messages.reversed.toList()[index];
-                return _buildMessageBubble(message);
-              },
+
+          Container(
+            width: double.infinity,
+            padding: const EdgeInsets.all(22),
+            decoration: BoxDecoration(
+              color: AppColors.card,
+              borderRadius: BorderRadius.circular(22),
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+
+                const Icon(
+                  Icons.smart_toy_outlined,
+                  color: AppColors.primary,
+                  size: 44,
+                ),
+
+                const SizedBox(height: 14),
+
+                Text(
+                  "Orbit Guide",
+                  style: AppTextStyles.heading,
+                ),
+
+                const SizedBox(height: 10),
+
+                Text(
+                  _menuTitle,
+                  style: AppTextStyles.subtitle,
+                ),
+              ],
             ),
           ),
-          if (_isLoading)
-            const Padding(
-              padding: EdgeInsets.symmetric(vertical: 8.0),
-              child: LinearProgressIndicator(),
-            ),
-          _buildMessageComposer(),
+
+          const SizedBox(height: 25),
+
+          Text(
+            "Quick Help",
+            style: AppTextStyles.subHeading,
+          ),
+
+          const SizedBox(height: 12),
+
+          ..._options.map((option) {
+            return _buildMenuCard(
+              _getIcon(option["key"]),
+              option["label"],
+              option["id"].toString(),
+            );
+          }).toList(),
+
+          const SizedBox(height: 30),
         ],
       ),
     );
   }
+    Widget _buildResponsePage() {
+    return Padding(
+      key: const ValueKey("response"),
+      padding: const EdgeInsets.all(22),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
 
-  Widget _buildMessageBubble(ChatMessage message) {
-    final isUser = message.isUser;
+          Container(
+            width: double.infinity,
+            padding: const EdgeInsets.all(20),
+            decoration: BoxDecoration(
+              color: AppColors.card,
+              borderRadius: BorderRadius.circular(22),
+              boxShadow: const [
+                BoxShadow(
+                  color: AppColors.shadow,
+                  blurRadius: 8,
+                  offset: Offset(0, 3),
+                )
+              ],
+            ),
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
 
-    return Align(
-      alignment: isUser ? Alignment.centerRight : Alignment.centerLeft,
-      child: Container(
-        margin: const EdgeInsets.symmetric(vertical: 5.0),
-        padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 10.0),
-        decoration: BoxDecoration(
-          color: isUser ? Colors.blueGrey[700] : Colors.grey[800],
-          borderRadius: BorderRadius.circular(20).copyWith(
-            bottomRight: isUser ? Radius.zero : const Radius.circular(20),
-            bottomLeft: isUser ? const Radius.circular(20) : Radius.zero,
+                const CircleAvatar(
+                  radius: 24,
+                  backgroundColor: AppColors.primary,
+                  child: Icon(
+                    Icons.smart_toy_outlined,
+                    color: AppColors.white,
+                  ),
+                ),
+
+                const SizedBox(width: 14),
+
+                Expanded(
+                  child: Text(
+                    _assistantReply,
+                    style: AppTextStyles.body.copyWith(
+                      height: 1.5,
+                    ),
+                  ),
+                ),
+              ],
+            ),
           ),
-        ),
-        child: Text(
-          message.text,
-          style: const TextStyle(
-            color: Colors.white,
-          ),
-        ),
-      ),
-    );
-  }
 
-  Widget _buildMessageComposer() {
-     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 12.0, vertical: 8.0),
-      color: Theme.of(context).cardColor,
-      child: SafeArea(
-        child: Row(
-          children: [
-            Expanded(
-              child: TextField(
-                controller: _controller,
-                onSubmitted: (_) => _sendMessage(),
-                style: const TextStyle(color: Colors.white),
-                decoration: const InputDecoration.collapsed(
-                  hintText: 'Ask about alumni...',
-                  hintStyle: TextStyle(color: Colors.white70),
+          const Spacer(),
+
+          SizedBox(
+            width: double.infinity,
+            child: FilledButton.icon(
+              icon: const Icon(Icons.arrow_back),
+              label: const Text("Back to Guide"),
+              onPressed: _waiting
+                  ? null
+                  : () {
+                      setState(() {
+                        _assistantReply = "";
+                      });
+                    },
+            ),
+          ),
+
+          if (_waiting)
+            const Padding(
+              padding: EdgeInsets.only(top: 20),
+              child: Center(
+                child: CircularProgressIndicator(
+                  color: AppColors.primary,
                 ),
               ),
             ),
-            IconButton(
-              icon: const Icon(Icons.send),
-              onPressed: _sendMessage,
-              color: _isLoading ? Colors.grey : Theme.of(context).colorScheme.primary,
-            ),
-          ],
-        ),
+        ],
       ),
     );
   }

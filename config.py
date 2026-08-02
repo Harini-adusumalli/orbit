@@ -1,7 +1,6 @@
 # config.py
 import os
 from dotenv import load_dotenv
-import os
 load_dotenv()
 
 PINECONE_API_KEY = os.getenv("PINECONE_API_KEY")
@@ -9,6 +8,13 @@ INDEX_NAME = os.getenv("INDEX_NAME")
 MODEL_NAME = os.getenv("MODEL_NAME")
 CSV_PATH = os.getenv("CSV_PATH")
 GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
+# Toggle between Gemini API and local LLM. Set USE_GEMINI_API=False to use the local model.
+USE_GEMINI_API = os.getenv("USE_GEMINI_API", "True").lower() in ("1", "true", "yes")
+# Set LOCAL_LLM_MODEL to a Hugging Face model ID or a local model path for local generation.
+LOCAL_LLM_MODEL = os.getenv("LOCAL_LLM_MODEL")
+LOCAL_LLM_DEVICE = os.getenv("LOCAL_LLM_DEVICE", "cpu")
+LOCAL_LLM_MAX_TOKENS = int(os.getenv("LOCAL_LLM_MAX_TOKENS", "256"))
+LOCAL_LLM_TEMPERATURE = float(os.getenv("LOCAL_LLM_TEMPERATURE", "0.7"))
 SECRET_KEY = os.getenv("SECRET_KEY")
 CREATE_INDEX = os.getenv("CREATE_INDEX") == "True"  # Set to True if you want to delete and recreate the index
 from pymongo import MongoClient

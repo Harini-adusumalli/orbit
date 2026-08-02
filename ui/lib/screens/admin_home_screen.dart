@@ -1,6 +1,12 @@
 // lib/screens/admin_home_screen.dart
+
 import 'package:flutter/material.dart';
-import 'package:orbit/screens/announce_event_screen.dart'; // <-- Import the new screen
+import 'package:orbit/screens/add_alumni_screen.dart';
+import 'package:orbit/screens/add_student_screen.dart';
+import 'package:orbit/screens/announce_event_screen.dart';
+
+import 'package:orbit/theme/app_colors.dart';
+import 'package:orbit/theme/app_text_styles.dart';
 
 class AdminHomeScreen extends StatelessWidget {
   const AdminHomeScreen({super.key});
@@ -8,37 +14,155 @@ class AdminHomeScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: Center(
-        child: Padding(
-          padding: const EdgeInsets.all(24.0),
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              const Text(
-                'Welcome, Admin!',
-                style: TextStyle(fontSize: 28, fontWeight: FontWeight.bold),
-                textAlign: TextAlign.center,
-              ),
-              const SizedBox(height: 12),
-              const Text(
-                'Manage users, review activities, and oversee platform operations.',
-                textAlign: TextAlign.center,
-              ),
-              const SizedBox(height: 40),
+      backgroundColor: AppColors.background,
 
-              // --- ADD THIS BUTTON ---
-              ElevatedButton.icon(
-                icon: const Icon(Icons.campaign_outlined),
-                label: const Text('Announce New Event'),
-                style: ElevatedButton.styleFrom(
-                  padding: const EdgeInsets.symmetric(vertical: 16),
+      appBar: AppBar(
+        title: const Text("Admin Dashboard"),
+      ),
+
+      body: SingleChildScrollView(
+        padding: const EdgeInsets.all(20),
+
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+
+            Text(
+              "Welcome, Admin 👋",
+              style: AppTextStyles.heading,
+            ),
+
+            const SizedBox(height: 8),
+
+            Text(
+              "Manage students, alumni and events from one place.",
+              style: AppTextStyles.subtitle,
+            ),
+
+            const SizedBox(height: 30),
+
+            _buildCard(
+              context,
+              title: "Add Alumni",
+              subtitle:
+                  "Register a new alumnus into the Orbit platform.",
+              icon: Icons.people_alt_outlined,
+              onTap: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (_) =>
+                        const AddAlumniScreen(),
+                  ),
+                );
+              },
+            ),
+
+            const SizedBox(height: 18),
+
+            _buildCard(
+              context,
+              title: "Add Student",
+              subtitle:
+                  "Create a new student account.",
+              icon: Icons.school_outlined,
+              onTap: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (_) =>
+                        const AddStudentScreen(),
+                  ),
+                );
+              },
+            ),
+
+            const SizedBox(height: 18),
+
+            _buildCard(
+              context,
+              title: "Announce Event",
+              subtitle:
+                  "Publish workshops, seminars and alumni meetups.",
+              icon: Icons.campaign_outlined,
+              onTap: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (_) =>
+                        const AnnounceEventScreen(),
+                  ),
+                );
+              },
+            ),
+
+            const SizedBox(height: 30),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildCard(
+    BuildContext context, {
+    required String title,
+    required String subtitle,
+    required IconData icon,
+    required VoidCallback onTap,
+  }) {
+    return InkWell(
+      borderRadius: BorderRadius.circular(18),
+      onTap: onTap,
+      child: Card(
+        color: AppColors.card,
+        elevation: 2,
+
+        child: Padding(
+          padding: const EdgeInsets.all(18),
+
+          child: Row(
+            children: [
+
+              CircleAvatar(
+                radius: 28,
+                backgroundColor:
+                    AppColors.primary.withOpacity(.12),
+
+                child: Icon(
+                  icon,
+                  color: AppColors.primary,
+                  size: 28,
                 ),
-                onPressed: () {
-                  Navigator.of(context).push(MaterialPageRoute(
-                    builder: (context) => const AnnounceEventScreen(),
-                  ));
-                },
+              ),
+
+              const SizedBox(width: 18),
+
+              Expanded(
+                child: Column(
+                  crossAxisAlignment:
+                      CrossAxisAlignment.start,
+
+                  children: [
+
+                    Text(
+                      title,
+                      style: AppTextStyles.title,
+                    ),
+
+                    const SizedBox(height: 6),
+
+                    Text(
+                      subtitle,
+                      style: AppTextStyles.body,
+                    ),
+                  ],
+                ),
+              ),
+
+              const Icon(
+                Icons.arrow_forward_ios,
+                size: 18,
+                color: AppColors.primary,
               ),
             ],
           ),

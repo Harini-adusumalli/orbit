@@ -10,7 +10,8 @@ class _ApiRoutes {
   static const String login = '$apiBaseUrl/login';
   static const String signup = '$apiBaseUrl/signup';
   static const String query = '$apiBaseUrl/query';
-  static const String geminiChat = '$apiBaseUrl/chat';
+  static const String assistant = '$apiBaseUrl/chat';
+  static const String menu = '$apiBaseUrl/menu';
   static const String sendChatRequest = '$apiBaseUrl/chat-requests/send';
   static const String getChats = '$apiBaseUrl/chats';
   static const String respondToChatRequest = '$apiBaseUrl/chat-requests';
@@ -30,7 +31,14 @@ class ApiService {
       if (token != null) 'x-access-token': token,
     };
   }
+  Future<Map<String, dynamic>> getMyProfile() async {
+  final response = await http.get(
+    Uri.parse(_ApiRoutes.getMyProfile),
+    headers: _headers,
+  );
 
+  return _handleResponse(response) as Map<String, dynamic>;
+}
   // Robust error handling
   dynamic _handleResponse(http.Response response) {
     final body = jsonDecode(response.body);
@@ -70,32 +78,49 @@ class ApiService {
     return _handleResponse(response);
   }
 
-  Future<Map<String, dynamic>> postToGeminiChat(String query, {List<Map<String, dynamic>>? results}) async {
-    final response = await http.post(
-      Uri.parse(_ApiRoutes.geminiChat),
-      headers: _headers,
-      body: jsonEncode({'query': query, 'results': results ?? []}),
-    );
-    return _handleResponse(response);
-  }
+  Future<Map<String, dynamic>> getAssistantMenu() async {
+  final response = await http.get(
+    Uri.parse(_ApiRoutes.menu),
+    headers: _headers,
+  );
 
-  Future<Map<String, dynamic>> getMyProfile() async {
-    final response = await http.get(
-      Uri.parse(_ApiRoutes.getMyProfile),
-      headers: _headers,
-    );
-    return _handleResponse(response);
-  }
+  return _handleResponse(response);
+}
+
+Future<Map<String, dynamic>> askAssistant(String option) async {
+  final response = await http.post(
+    Uri.parse(_ApiRoutes.assistant),
+    headers: _headers,
+    body: jsonEncode({
+      "option": option,
+    }),
+  );
+
+  return _handleResponse(response);
+}
 
   // --- Chat ---
   Future<Map<String, dynamic>> createOrGetChatRoom(String alumniId) async {
-    final response = await http.post(
-      Uri.parse(_ApiRoutes.sendChatRequest),
-      headers: _headers,
-      body: jsonEncode({'alumni_id': alumniId}),
-    );
-    return _handleResponse(response);
-  }
+
+  print("================================");
+  print("Sending Chat Request");
+  print("Alumni ID : $alumniId");
+  print("Token : ${authManager.token}");
+  print("================================");
+
+  final response = await http.post(
+    Uri.parse(_ApiRoutes.sendChatRequest),
+    headers: _headers,
+    body: jsonEncode({
+      "alumni_id": alumniId,
+    }),
+  );
+
+  print("Status Code : ${response.statusCode}");
+  print("Response : ${response.body}");
+
+  return _handleResponse(response);
+}
 
   Future<Map<String, dynamic>> getChatRooms() async {
     final response = await http.get(

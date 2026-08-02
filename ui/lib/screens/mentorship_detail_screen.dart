@@ -1,134 +1,245 @@
 // lib/screens/mentorship_detail_screen.dart
+
 import 'package:flutter/material.dart';
-import 'package:orbit/main.dart'; // To access authManager
-import 'package:orbit/screens/mentorship_board_screen.dart'; // To access the model
+import 'package:orbit/main.dart';
 import 'package:orbit/screens/chat_screen.dart';
+import 'package:orbit/screens/mentorship_board_screen.dart';
+import 'package:orbit/theme/app_colors.dart';
+import 'package:orbit/theme/app_text_styles.dart';
 
 class MentorshipDetailScreen extends StatelessWidget {
   final MentorshipOpportunity opportunity;
 
-  const MentorshipDetailScreen({super.key, required this.opportunity});
+  const MentorshipDetailScreen({
+    super.key,
+    required this.opportunity,
+  });
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final isStudent = authManager.userRole == 'student';
+    final isStudent = authManager.userRole == "student";
 
     return Scaffold(
+      backgroundColor: AppColors.background,
+
       appBar: AppBar(
-        title: const Text('Opportunity Details'),
+        backgroundColor: AppColors.background,
+        elevation: 0,
+        centerTitle: true,
+        iconTheme: const IconThemeData(
+          color: AppColors.textPrimary,
+        ),
+        title: Text(
+          "Opportunity Details",
+          style: AppTextStyles.title,
+        ),
       ),
+
       body: SingleChildScrollView(
-        padding: const EdgeInsets.all(20.0),
+        padding: const EdgeInsets.all(20),
+
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // --- Header ---
-            Text(
-              opportunity.title,
-              style: theme.textTheme.displaySmall,
-            ),
-            const SizedBox(height: 16),
-            Row(
-              children: [
-                CircleAvatar(
-                  radius: 24,
-                  // TODO: Use actual mentor image URL
-                  backgroundImage: NetworkImage('https://placehold.co/100x100/7E57C2/FFFFFF?text=${opportunity.mentorName.substring(0,1)}'),
-                ),
-                const SizedBox(width: 12),
-                Column(
+
+            Card(
+              child: Padding(
+                padding: const EdgeInsets.all(20),
+
+                child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
+
                     Text(
-                      opportunity.mentorName,
-                      style: theme.textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
+                      opportunity.title,
+                      style: AppTextStyles.heading,
                     ),
-                    Text(
-                      'Alumnus', // Role of the mentor
-                      style: theme.textTheme.bodyLarge?.copyWith(color: Colors.white60),
+
+                    const SizedBox(height: 20),
+
+                    Row(
+                      children: [
+
+                        CircleAvatar(
+                          radius: 28,
+                          backgroundColor: AppColors.primary,
+                          child: Text(
+                            opportunity.mentorName[0],
+                            style: const TextStyle(
+                              color: Colors.white,
+                              fontWeight: FontWeight.bold,
+                              fontSize: 20,
+                            ),
+                          ),
+                        ),
+
+                        const SizedBox(width: 15),
+
+                        Column(
+                          crossAxisAlignment:
+                              CrossAxisAlignment.start,
+                          children: [
+
+                            Text(
+                              opportunity.mentorName,
+                              style: AppTextStyles.title,
+                            ),
+
+                            const SizedBox(height: 4),
+
+                            Text(
+                              "Alumnus",
+                              style:
+                                  AppTextStyles.subtitle,
+                            ),
+                          ],
+                        ),
+                      ],
                     ),
                   ],
                 ),
-              ],
-            ),
-            const Divider(height: 32),
-
-            // --- Description ---
-            _buildSectionHeader(context, 'About this Opportunity'),
-            const SizedBox(height: 8),
-            Text(
-              opportunity.description,
-              style: theme.textTheme.bodyLarge?.copyWith(height: 1.5, color: Colors.white70),
-            ),
-            const SizedBox(height: 24),
-
-            // --- Required Skills ---
-            _buildSectionHeader(context, 'Required Skills'),
-            const SizedBox(height: 12),
-            Wrap(
-              spacing: 8.0,
-              runSpacing: 8.0,
-              children: opportunity.requiredSkills.split(',').map((skill) {
-                return Chip(
-                  label: Text(skill.trim()),
-                  backgroundColor: theme.colorScheme.secondaryContainer.withOpacity(0.5),
-                );
-              }).toList(),
-            ),
-          ],
-        ),
-      ),
-      // --- Floating Action Button for Students ---
-      floatingActionButtonLocation: FloatingActionButtonLocation.centerFloat,
-      floatingActionButton: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 20.0),
-        child: Row(
-          children: [
-            Expanded(
-              child: FloatingActionButton.extended(
-                onPressed: () {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(
-                      content: Text('Your application has been sent!'),
-                      backgroundColor: Colors.green,
-                    ),
-                  );
-                  Navigator.of(context).pop();
-                },
-                icon: const Icon(Icons.send_outlined),
-                label: const Text('Apply Now'),
               ),
             ),
-            const SizedBox(width: 16),
-            Expanded(
-              child: FloatingActionButton.extended(
-                onPressed: () {
-                  // Open chat screen with mentor
-                  Navigator.of(context).push(
-                    MaterialPageRoute(
-                      builder: (context) => ChatScreen(
-                        recipientId: opportunity.id, // Replace with email/rollno if available
-                        recipientName: opportunity.mentorName,
+
+            const SizedBox(height: 20),
+
+            Card(
+              child: Padding(
+                padding: const EdgeInsets.all(20),
+
+                child: Column(
+                  crossAxisAlignment:
+                      CrossAxisAlignment.start,
+                  children: [
+
+                    Text(
+                      "About this Opportunity",
+                      style:
+                          AppTextStyles.subHeading,
+                    ),
+
+                    const SizedBox(height: 15),
+
+                    Text(
+                      opportunity.description,
+                      style: AppTextStyles.body.copyWith(
+                        height: 1.6,
                       ),
                     ),
-                  );
-                },
-                icon: const Icon(Icons.message_outlined),
-                label: const Text('Send Message'),
+                  ],
+                ),
               ),
             ),
+
+            const SizedBox(height: 20),
+
+            Card(
+              child: Padding(
+                padding: const EdgeInsets.all(20),
+
+                child: Column(
+                  crossAxisAlignment:
+                      CrossAxisAlignment.start,
+                  children: [
+
+                    Text(
+                      "Required Skills",
+                      style:
+                          AppTextStyles.subHeading,
+                    ),
+
+                    const SizedBox(height: 15),
+
+                    Wrap(
+                      spacing: 10,
+                      runSpacing: 10,
+                      children: opportunity
+                          .requiredSkills
+                          .split(",")
+                          .map(
+                            (skill) => Chip(
+                              label: Text(
+                                skill.trim(),
+                              ),
+                            ),
+                          )
+                          .toList(),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+
+            const SizedBox(height: 100),
           ],
         ),
       ),
-      // End of Scaffold
+
+      floatingActionButtonLocation:
+          FloatingActionButtonLocation.centerFloat,
+
+      floatingActionButton: isStudent
+          ? Padding(
+              padding: const EdgeInsets.symmetric(
+                horizontal: 20,
+              ),
+
+              child: Row(
+                children: [
+
+                  Expanded(
+                    child: FilledButton.icon(
+                      onPressed: () {
+
+                        ScaffoldMessenger.of(context)
+                            .showSnackBar(
+                          const SnackBar(
+                            content: Text(
+                              "Application submitted successfully!",
+                            ),
+                          ),
+                        );
+                      },
+
+                      icon: const Icon(Icons.send),
+
+                      label: const Text(
+                        "Apply",
+                      ),
+                    ),
+                  ),
+
+                  const SizedBox(width: 15),
+
+                  Expanded(
+                    child: FilledButton.icon(
+                      onPressed: () {
+
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (_) => ChatScreen(
+                              recipientId:
+                                  opportunity.id,
+                              recipientName:
+                                  opportunity
+                                      .mentorName,
+                            ),
+                          ),
+                        );
+                      },
+
+                      icon: const Icon(Icons.chat),
+
+                      label: const Text(
+                        "Message",
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            )
+          : null,
     );
   }
-}
-
-Widget _buildSectionHeader(BuildContext context, String title) {
-  return Text(
-    title,
-    style: Theme.of(context).textTheme.headlineSmall,
-  );
 }

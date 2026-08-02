@@ -1,13 +1,19 @@
+// lib/screens/main_shell.dart
+
 import 'package:flutter/material.dart';
+import 'package:orbit/main.dart';
+
+import 'package:orbit/screens/admin_home_screen.dart';
+import 'package:orbit/screens/alumni_management_screen.dart';
+import 'package:orbit/screens/bot_chat_screen.dart';
 import 'package:orbit/screens/chat_list_screen.dart';
+import 'package:orbit/screens/donation_screen.dart';
 import 'package:orbit/screens/events_screen.dart';
 import 'package:orbit/screens/home_screen.dart';
 import 'package:orbit/screens/profile_screen.dart';
-import 'package:orbit/main.dart'; // Import authManager
-import 'package:orbit/screens/donation_screen.dart';
-import 'package:orbit/screens/bot_chat_screen.dart';
-import 'package:orbit/screens/admin_home_screen.dart';
-import 'package:orbit/screens/alumni_management_screen.dart';
+
+import 'package:orbit/theme/app_colors.dart';
+import 'package:orbit/theme/app_text_styles.dart';
 
 class MainShell extends StatefulWidget {
   const MainShell({super.key});
@@ -21,109 +27,243 @@ class _MainShellState extends State<MainShell> {
 
   List<Widget> get _widgetOptions {
     switch (authManager.userRole) {
-      case 'alumnus':
-        return [
-          const HomeScreen(),
-          const EventsScreen(),
-          const ChatListScreen(),
-          const DonationScreen(),
-          const ProfileScreen(),
-          const ChatBotScreen(),
+      case "alumnus":
+        return const [
+          HomeScreen(),
+          EventsScreen(),
+          ChatListScreen(),
+          DonationScreen(),
+          ProfileScreen(),
+          ChatBotScreen(),
         ];
-      case 'student':
-        return [
-          const HomeScreen(),
-          const EventsScreen(),
-          const ChatListScreen(),
-          const ProfileScreen(),
-          const ChatBotScreen(),
+
+      case "student":
+        return const [
+          HomeScreen(),
+          EventsScreen(),
+          ChatListScreen(),
+          ProfileScreen(),
+          ChatBotScreen(),
         ];
-      case 'admin':
-        return [
-          const AdminHomeScreen(),
-          const AlumniManagementScreen(),
-          const EventsScreen(),
-          const ChatListScreen(),
-          const ProfileScreen(),
+
+      case "admin":
+        return const [
+          AdminHomeScreen(),
+          AlumniManagementScreen(),
+          EventsScreen(),
+          ChatListScreen(),
+          ProfileScreen(),
         ];
+
       default:
-        return [const HomeScreen()];
+        return const [
+          HomeScreen(),
+        ];
     }
   }
 
-  List<String> get _widgetTitles {
+  List<String> get _titles {
     switch (authManager.userRole) {
-      case 'alumnus':
-        return ['Orbit Home', 'Events', 'Chats', 'Donations', 'Profile', 'AI Assistant'];
-      case 'student':
-        return ['Orbit Home', 'Events', 'Chats', 'Profile', 'AI Assistant'];
-      case 'admin':
-        return ['Admin Dashboard', 'Alumni Management', 'Events', 'Chats', 'Profile'];
+      case "alumnus":
+        return [
+          "Orbit",
+          "Events",
+          "Chats",
+          "Donations",
+          "Profile",
+          "Orbit Guide",
+        ];
+
+      case "student":
+        return [
+          "Orbit",
+          "Events",
+          "Chats",
+          "Profile",
+          "Orbit Guide",
+        ];
+
+      case "admin":
+        return [
+          "Dashboard",
+          "User Management",
+          "Events",
+          "Chats",
+          "Profile",
+        ];
+
       default:
-        return ['Orbit Home'];
+        return [
+          "Orbit",
+        ];
     }
   }
 
-  void _onItemTapped(int index) {
+  void _onTap(int index) {
     setState(() {
       _selectedIndex = index;
     });
   }
 
-  @override
-  Widget build(BuildContext context) {
-    List<BottomNavigationBarItem> navItems;
+  List<BottomNavigationBarItem> _items() {
     switch (authManager.userRole) {
-      case 'alumnus':
-        navItems = const [
-          BottomNavigationBarItem(icon: Icon(Icons.home_outlined), label: 'Home'),
-          BottomNavigationBarItem(icon: Icon(Icons.event_outlined), label: 'Events'),
-          BottomNavigationBarItem(icon: Icon(Icons.chat_bubble_outline), label: 'Chats'),
-          BottomNavigationBarItem(icon: Icon(Icons.favorite_outline), label: 'Donations'),
-          BottomNavigationBarItem(icon: Icon(Icons.person_outline), label: 'Profile'),
-          BottomNavigationBarItem(icon: Icon(Icons.smart_toy_outlined), label: 'AI Assistant'),
+      case "alumnus":
+        return const [
+
+          BottomNavigationBarItem(
+            icon: Icon(Icons.home_outlined),
+            activeIcon: Icon(Icons.home),
+            label: "Home",
+          ),
+
+          BottomNavigationBarItem(
+            icon: Icon(Icons.event_outlined),
+            activeIcon: Icon(Icons.event),
+            label: "Events",
+          ),
+
+          BottomNavigationBarItem(
+            icon: Icon(Icons.chat_bubble_outline),
+            activeIcon: Icon(Icons.chat),
+            label: "Chats",
+          ),
+
+          BottomNavigationBarItem(
+            icon: Icon(Icons.favorite_outline),
+            activeIcon: Icon(Icons.favorite),
+            label: "Donate",
+          ),
+
+          BottomNavigationBarItem(
+            icon: Icon(Icons.person_outline),
+            activeIcon: Icon(Icons.person),
+            label: "Profile",
+          ),
+
+          BottomNavigationBarItem(
+            icon: Icon(Icons.smart_toy_outlined),
+            activeIcon: Icon(Icons.smart_toy),
+            label: "Guide",
+          ),
         ];
-        break;
-      case 'student':
-        navItems = const [
-          BottomNavigationBarItem(icon: Icon(Icons.home_outlined), label: 'Home'),
-          BottomNavigationBarItem(icon: Icon(Icons.event_outlined), label: 'Events'),
-          BottomNavigationBarItem(icon: Icon(Icons.chat_bubble_outline), label: 'Chats'),
-          BottomNavigationBarItem(icon: Icon(Icons.person_outline), label: 'Profile'),
-          BottomNavigationBarItem(icon: Icon(Icons.smart_toy_outlined), label: 'AI Assistant'),
+
+      case "student":
+        return const [
+
+          BottomNavigationBarItem(
+            icon: Icon(Icons.home_outlined),
+            activeIcon: Icon(Icons.home),
+            label: "Home",
+          ),
+
+          BottomNavigationBarItem(
+            icon: Icon(Icons.event_outlined),
+            activeIcon: Icon(Icons.event),
+            label: "Events",
+          ),
+
+          BottomNavigationBarItem(
+            icon: Icon(Icons.chat_bubble_outline),
+            activeIcon: Icon(Icons.chat),
+            label: "Chats",
+          ),
+
+          BottomNavigationBarItem(
+            icon: Icon(Icons.person_outline),
+            activeIcon: Icon(Icons.person),
+            label: "Profile",
+          ),
+
+          BottomNavigationBarItem(
+            icon: Icon(Icons.smart_toy_outlined),
+            activeIcon: Icon(Icons.smart_toy),
+            label: "Guide",
+          ),
         ];
-        break;
-      case 'admin':
-        navItems = const [
-          BottomNavigationBarItem(icon: Icon(Icons.dashboard_outlined), label: 'Dashboard'),
-          BottomNavigationBarItem(icon: Icon(Icons.manage_accounts_outlined), label: 'Alumni Mgmt'),
-          BottomNavigationBarItem(icon: Icon(Icons.event_outlined), label: 'Events'),
-          BottomNavigationBarItem(icon: Icon(Icons.chat_bubble_outline), label: 'Chats'),
-          BottomNavigationBarItem(icon: Icon(Icons.person_outline), label: 'Profile'),
+
+      case "admin":
+        return const [
+
+          BottomNavigationBarItem(
+            icon: Icon(Icons.dashboard_outlined),
+            activeIcon: Icon(Icons.dashboard),
+            label: "Dashboard",
+          ),
+
+          BottomNavigationBarItem(
+            icon: Icon(Icons.manage_accounts_outlined),
+            activeIcon: Icon(Icons.manage_accounts),
+            label: "Users",
+          ),
+
+          BottomNavigationBarItem(
+            icon: Icon(Icons.event_outlined),
+            activeIcon: Icon(Icons.event),
+            label: "Events",
+          ),
+
+          BottomNavigationBarItem(
+            icon: Icon(Icons.chat_bubble_outline),
+            activeIcon: Icon(Icons.chat),
+            label: "Chats",
+          ),
+
+          BottomNavigationBarItem(
+            icon: Icon(Icons.person_outline),
+            activeIcon: Icon(Icons.person),
+            label: "Profile",
+          ),
         ];
-        break;
+
       default:
-        navItems = const [
-          BottomNavigationBarItem(icon: Icon(Icons.home_outlined), label: 'Home'),
+        return const [
+
+          BottomNavigationBarItem(
+            icon: Icon(Icons.home_outlined),
+            activeIcon: Icon(Icons.home),
+            label: "Home",
+          ),
         ];
     }
+  }
 
+  @override
+  Widget build(BuildContext context) {
     return Scaffold(
+
+      backgroundColor: AppColors.background,
+
       appBar: AppBar(
-        title: Text(_widgetTitles.elementAt(_selectedIndex)),
+        backgroundColor: AppColors.background,
         elevation: 0,
-        backgroundColor: Theme.of(context).scaffoldBackgroundColor, // Blend AppBar with background
+        centerTitle: true,
+
+        title: Text(
+          _titles[_selectedIndex],
+          style: AppTextStyles.title,
+        ),
       ),
-      body: Center(
-        child: _widgetOptions.elementAt(_selectedIndex),
-      ),
+
+      body: _widgetOptions[_selectedIndex],
+
       bottomNavigationBar: BottomNavigationBar(
-        items: navItems,
         currentIndex: _selectedIndex,
-        onTap: _onItemTapped,
+        onTap: _onTap,
+
         type: BottomNavigationBarType.fixed,
-        selectedItemColor: Theme.of(context).colorScheme.primary,
-        unselectedItemColor: Colors.grey,
+
+        backgroundColor: AppColors.card,
+
+        selectedItemColor: AppColors.primary,
+
+        unselectedItemColor:
+            AppColors.textSecondary,
+
+        selectedLabelStyle: const TextStyle(
+          fontWeight: FontWeight.bold,
+        ),
+
+        items: _items(),
       ),
     );
   }

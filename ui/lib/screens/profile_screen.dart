@@ -1,8 +1,9 @@
-// lib/screens/profile_screen.dart
 import 'package:flutter/material.dart';
 import 'package:orbit/main.dart';
 import 'package:orbit/screens/edit_profile_screen.dart';
 import 'package:orbit/services/api_service.dart';
+import 'package:orbit/theme/app_colors.dart';
+import 'package:orbit/theme/app_text_styles.dart';
 
 class ProfileScreen extends StatefulWidget {
   const ProfileScreen({super.key});
@@ -13,7 +14,9 @@ class ProfileScreen extends StatefulWidget {
 
 class _ProfileScreenState extends State<ProfileScreen> {
   final ApiService _apiService = ApiService();
+
   Map<String, dynamic>? _profileData;
+
   bool _isLoading = true;
   String? _error;
 
@@ -25,22 +28,32 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
   Future<void> _loadProfile() async {
     if (!mounted) return;
-    setState(() { _isLoading = true; _error = null; });
 
-    if (authManager.userRole == 'alumnus') {
+    setState(() {
+      _isLoading = true;
+      _error = null;
+    });
+
+    if (authManager.userRole == "alumnus") {
       try {
         final data = await _apiService.getMyProfile();
+
         if (mounted) {
-          setState(() { _profileData = data; });
+          setState(() {
+            _profileData = data;
+          });
         }
       } catch (e) {
         if (mounted) {
-          setState(() { _error = "Could not load alumni profile."; });
+          _error = "Unable to load profile.";
         }
       }
     }
+
     if (mounted) {
-      setState(() { _isLoading = false; });
+      setState(() {
+        _isLoading = false;
+      });
     }
   }
 
@@ -49,170 +62,276 @@ class _ProfileScreenState extends State<ProfileScreen> {
   }
 
   Future<void> _navigateToEditProfile() async {
-    await Navigator.of(context).push(
-      MaterialPageRoute(builder: (context) => const EditProfileScreen()),
+    await Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => const EditProfileScreen(),
+      ),
     );
+
     _loadProfile();
   }
 
   @override
   Widget build(BuildContext context) {
-    final currentUserRole = authManager.userRole;
+    final role = authManager.userRole;
 
     return Scaffold(
+      backgroundColor: AppColors.background,
+
+      appBar: AppBar(
+        backgroundColor: AppColors.background,
+        elevation: 0,
+        centerTitle: true,
+        title: Text(
+          "Profile",
+          style: AppTextStyles.title,
+        ),
+      ),
+
       body: _isLoading
-          ? const Center(child: CircularProgressIndicator())
+          ? const Center(
+              child: CircularProgressIndicator(
+                color: AppColors.primary,
+              ),
+            )
           : _error != null
-              ? Center(child: Text(_error!, style: const TextStyle(color: Colors.red)))
-              : _buildProfileBody(context), // Use a helper to build the body
+              ? Center(
+                  child: Text(
+                    _error!,
+                    style: AppTextStyles.body,
+                  ),
+                )
+              : _buildProfileBody(role),
     );
   }
 
-  // --- WIDGET BUILDER LOGIC ---
-  Widget _buildProfileBody(BuildContext context) {
-    final theme = Theme.of(context);
-    final currentRollNumber = authManager.rollNumber;
-    final currentUserRole = authManager.userRole;
+  Widget _buildProfileBody(String? role) {
+    final rollNo = authManager.rollNumber;
 
-    // --- NEW: ADMIN-SPECIFIC UI ---
-    if (currentUserRole == 'admin') {
+    if (role == "admin") {
       return ListView(
-        padding: const EdgeInsets.all(24.0),
+        padding: const EdgeInsets.all(20),
         children: [
-          Text('Admin Settings', style: theme.textTheme.displaySmall),
-          const SizedBox(height: 8),
+
           Text(
-            'Logged in as: ${currentRollNumber ?? 'N/A'}',
-            style: theme.textTheme.headlineSmall?.copyWith(color: Colors.black54),
+            "Admin Settings",
+            style: AppTextStyles.heading,
           ),
-          const Divider(height: 40),
-          _buildSettingsTile(
-            context,
-            icon: Icons.settings_outlined,
-            title: 'Platform Settings',
-            subtitle: 'Configure platform-wide options',
-            onTap: () {
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(content: Text('Platform settings placeholder.')),
-              );
-            },
+
+          const SizedBox(height: 8),
+
+          Text(
+            "Logged in as $rollNo",
+            style: AppTextStyles.subtitle,
           ),
-          _buildSettingsTile(
-            context,
-            icon: Icons.security_outlined,
-            title: 'Security',
-            subtitle: 'Manage roles and permissions',
-            onTap: () {
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(content: Text('Security settings placeholder.')),
-              );
-            },
+
+          const SizedBox(height: 25),
+
+          Card(
+            child: Column(
+              children: [
+
+                _buildSettingsTile(
+                  Icons.settings,
+                  "Platform Settings",
+                  "Configure Orbit",
+                ),
+
+                const Divider(),
+
+                _buildSettingsTile(
+                  Icons.security,
+                  "Security",
+                  "Manage permissions",
+                ),
+
+                const Divider(),
+
+                _buildSettingsTile(
+                  Icons.history,
+                  "Audit Logs",
+                  "View activity",
+                ),
+              ],
+            ),
           ),
-          _buildSettingsTile(
-            context,
-            icon: Icons.history,
-            title: 'View Audit Logs',
-            subtitle: 'Track admin and user activity',
-            onTap: () {
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(content: Text('Audit logs placeholder.')),
-              );
-            },
-          ),
-          const SizedBox(height: 40),
-          ElevatedButton.icon(
+
+          const SizedBox(height: 35),
+
+          FilledButton.icon(
             onPressed: _logout,
             icon: const Icon(Icons.logout),
-            label: const Text('Log Out'),
-            style: ElevatedButton.styleFrom(
-              minimumSize: const Size(double.infinity, 50),
-              backgroundColor: Colors.red.withOpacity(0.8),
-            ),
+            label: const Text("Logout"),
           ),
         ],
       );
     }
-    
-    // --- EXISTING UI for ALUMNI and STUDENTS ---
+
     return SingleChildScrollView(
-      padding: const EdgeInsets.all(24.0),
+      padding: const EdgeInsets.all(20),
+
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
+
         children: [
-          if (currentUserRole == 'alumnus')
+
+          if (role == "alumnus")
             Align(
               alignment: Alignment.topRight,
-              child: TextButton.icon(
-                icon: const Icon(Icons.edit_outlined),
-                label: const Text('Edit Profile'),
+              child: FilledButton.icon(
                 onPressed: _navigateToEditProfile,
+                icon: const Icon(Icons.edit),
+                label: const Text("Edit Profile"),
               ),
             ),
-          Text(
-            _profileData?['Full_Name'] ?? currentRollNumber ?? 'Name Not Available',
-            style: theme.textTheme.displaySmall,
-          ),
-          const SizedBox(height: 8),
-          Text(
-            'Role: ${currentUserRole?.capitalize() ?? 'N/A'}',
-            style: theme.textTheme.headlineSmall?.copyWith(color: Colors.black54),
-          ),
-          const Divider(height: 40),
-          if (currentUserRole == 'alumnus' && _profileData != null)
-            ..._buildAlumniDetails(theme),
-          if (currentUserRole == 'student')
-            Text(
-              'Welcome, $currentRollNumber!',
-              style: theme.textTheme.bodyLarge,
+
+          Card(
+            child: Padding(
+              padding: const EdgeInsets.all(20),
+
+              child: Column(
+                crossAxisAlignment:
+                    CrossAxisAlignment.start,
+
+                children: [
+
+                  Text(
+                    _profileData?["Full_Name"] ??
+                        rollNo ??
+                        "",
+                    style: AppTextStyles.heading,
+                  ),
+
+                  const SizedBox(height: 8),
+
+                  Text(
+                    role?.capitalize() ?? "",
+                    style: AppTextStyles.subtitle,
+                  ),
+                ],
+              ),
             ),
-          const SizedBox(height: 40),
-          ElevatedButton.icon(
+          ),
+
+          const SizedBox(height: 20),
+
+          if (role == "alumnus" &&
+              _profileData != null)
+            ..._buildAlumniDetails(),
+
+          if (role == "student")
+            Card(
+              child: Padding(
+                padding: const EdgeInsets.all(20),
+                child: Text(
+                  "Welcome, $rollNo!",
+                  style: AppTextStyles.body,
+                ),
+              ),
+            ),
+
+          const SizedBox(height: 30),
+
+          FilledButton.icon(
             onPressed: _logout,
             icon: const Icon(Icons.logout),
-            label: const Text('Log Out'),
-            style: ElevatedButton.styleFrom(
-              minimumSize: const Size(double.infinity, 50),
-              backgroundColor: Colors.red.withOpacity(0.8),
-            ),
+            label: const Text("Logout"),
           ),
         ],
       ),
     );
   }
 
-  // --- HELPER for Admin Settings List ---
-  Widget _buildSettingsTile(BuildContext context, {required IconData icon, required String title, required String subtitle, required VoidCallback onTap}) {
+  Widget _buildSettingsTile(
+      IconData icon,
+      String title,
+      String subtitle) {
     return ListTile(
-      contentPadding: EdgeInsets.zero,
-      leading: Icon(icon, size: 28),
-      title: Text(title, style: Theme.of(context).textTheme.titleMedium),
-      subtitle: Text(subtitle),
-      onTap: onTap,
+      leading: Icon(
+        icon,
+        color: AppColors.primary,
+      ),
+      title: Text(
+        title,
+        style: AppTextStyles.title,
+      ),
+      subtitle: Text(
+        subtitle,
+        style: AppTextStyles.subtitle,
+      ),
     );
   }
-
-  // --- HELPER for Alumni Details ---
-  List<Widget> _buildAlumniDetails(ThemeData theme) {
+    List<Widget> _buildAlumniDetails() {
     return [
-      _buildInfoRow(theme, 'Company', _profileData?['Current_Company']),
-      _buildInfoRow(theme, 'Designation', _profileData?['Designation']),
-      _buildInfoRow(theme, 'Industry', _profileData?['Industry']),
-      _buildInfoRow(theme, 'Mentorship Area', _profileData?['Mentorship_Area']),
-      const SizedBox(height: 16),
+
+      Card(
+        child: Padding(
+          padding: const EdgeInsets.all(20),
+
+          child: Column(
+            crossAxisAlignment:
+                CrossAxisAlignment.start,
+
+            children: [
+
+              _buildInfoRow(
+                "Company",
+                _profileData?["Current_Company"],
+              ),
+
+              const Divider(),
+
+              _buildInfoRow(
+                "Designation",
+                _profileData?["Designation"],
+              ),
+
+              const Divider(),
+
+              _buildInfoRow(
+                "Industry",
+                _profileData?["Industry"],
+              ),
+
+              const Divider(),
+
+              _buildInfoRow(
+                "Mentorship Area",
+                _profileData?["Mentorship_Area"],
+              ),
+            ],
+          ),
+        ),
+      ),
     ];
   }
 
-  Widget _buildInfoRow(ThemeData theme, String label, String? value) {
+  Widget _buildInfoRow(
+    String title,
+    String? value,
+  ) {
     return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 8.0),
+      padding: const EdgeInsets.symmetric(
+        vertical: 10,
+      ),
+
       child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
+        crossAxisAlignment:
+            CrossAxisAlignment.start,
+
         children: [
-          Text(label, style: theme.textTheme.titleMedium),
-          const SizedBox(height: 4),
+
           Text(
-            value ?? 'Not Provided',
-            style: theme.textTheme.bodyLarge?.copyWith(color: Colors.black54),
+            title,
+            style: AppTextStyles.title,
+          ),
+
+          const SizedBox(height: 6),
+
+          Text(
+            value ?? "Not Provided",
+            style: AppTextStyles.subtitle,
           ),
         ],
       ),
@@ -223,6 +342,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
 extension StringExtension on String {
   String capitalize() {
     if (isEmpty) return this;
+
     return "${this[0].toUpperCase()}${substring(1).toLowerCase()}";
   }
 }

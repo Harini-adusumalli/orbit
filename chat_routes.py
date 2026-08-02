@@ -19,64 +19,124 @@ chat_api = Blueprint("chat_api", __name__)
 @chat_api.route("/chat-requests/send", methods=["POST"])
 @token_required
 def send_chat_request(current_user):
-    from socket_events import socketio 
-    
+    from socket_events import socketio
+
+    print("\n========== CHAT REQUEST ==========")
+    print("Current User:")
+    print(current_user)
+
     data = request.get_json()
-    recipient_profile_id = data.get('alumni_id')
+    print("\nReceived JSON:")
+    print(data)
+
+    recipient_profile_id = data.get("alumni_id")
 
     if not recipient_profile_id:
-        return jsonify({"error": "recipient_id is required"}), 400
+        return jsonify({"error": "alumni_id is required"}), 400
 
-    recipient_profile = alumni_collection.find_one({"Alumni_ID": recipient_profile_id})
-    if not recipient_profile:
-        return jsonify({"error": "Recipient profile not found with the given ID"}), 404
-
-    recipient_user_id_from_profile = recipient_profile.get("Roll_Number")
-    if not recipient_user_id_from_profile:
-        return jsonify({"error": "Recipient profile is missing a user ID"}), 404
-        
-    recipient_user = users_collection.find_one(
-        {"_id": {"$regex": f"^{recipient_user_id_from_profile}$", "$options": "i"}}
-    )
-    if not recipient_user:
-        return jsonify({"error": "Recipient not found in the user system"}), 404
-
-    recipient_user_id = recipient_user['_id']
-
-    if current_user['_id'] == recipient_user_id:
-        return jsonify({"error": "You cannot send a chat request to yourself"}), 400
-
-    existing_request = chat_requests_collection.find_one({
-        "sender_id": current_user['_id'],
-        "recipient_id": recipient_user_id,
-        "status": {"$in": ["pending", "accepted"]}
+    # Find alumni profile
+    recipient_profile = alumni_collection.find_one({
+        "Alumni_ID": recipient_profile_id
     })
-    if existing_request:
-        return jsonify({"error": "A pending or accepted chat request already exists with this user"}), 409
 
+    print("\nRecipient Profile:")
+    print(recipient_profile)
+
+    if not recipient_profile:
+        return jsonify({
+            "error": "Recipient profile not found"
+        }), 404
+
+    # Get roll number from alumni profile
+    recipient_user_id_from_profile = recipient_profile.get("Roll_Number")
+
+    print("\nRoll Number from Profile:")
+    print(recipient_user_id_from_profile)
+
+    if not recipient_user_id_from_profile:
+        return jsonify({
+            "error": "Recipient profile is missing Roll_Number"
+        }), 404
+
+    # Find corresponding user account
+    recipient_user = users_collection.find_one({
+        "_id": {
+            "$regex": f"^{recipient_user_id_from_profile}$",
+            "$options": "i"
+        }
+    })
+
+    print("\nRecipient User:")
+    print(recipient_user)
+
+    if not recipient_user:
+        return jsonify({
+            "error": "Recipient not found in users collection"
+        }), 404
+
+    recipient_user_id = recipient_user["_id"]
+
+    # Don't allow chatting with yourself
+    if current_user["_id"] == recipient_user_id:
+        return jsonify({
+            "error": "You cannot send a chat request to yourself"
+        }), 400
+
+    # Check for existing pending/accepted request
+    existing_request = chat_requests_collection.find_one({
+        "sender_id": current_user["_id"],
+        "recipient_id": recipient_user_id,
+        "status": {
+            "$in": ["pending", "accepted"]
+        }
+    })
+
+    if existing_request:
+        return jsonify({
+            "error": "A pending or accepted chat request already exists."
+        }), 409
+
+    # Create request
     request_doc = {
-        "sender_id": current_user['_id'],
+        "sender_id": current_user["_id"],
         "recipient_id": recipient_user_id,
         "status": "pending",
         "created_at": datetime.datetime.now(datetime.timezone.utc)
     }
-    chat_requests_collection.insert_one(request_doc)
 
+    print("\nSaving Chat Request:")
+    print(request_doc)
+
+    result = chat_requests_collection.insert_one(request_doc)
+
+    request_doc["_id"] = result.inserted_id
+
+    print("Inserted Request ID:")
+    print(result.inserted_id)
+
+    # Notification
     notification_doc = {
         "user_id": recipient_user_id,
         "message": f"You have a new chat request from {current_user.get('name', current_user['_id'])}.",
         "type": "chat_request",
         "is_read": False,
-        "related_id": str(request_doc['_id']),
+        "related_id": str(result.inserted_id),
         "created_at": datetime.datetime.now(datetime.timezone.utc)
     }
+
     notifications_collection.insert_one(notification_doc)
-    
-    socketio.emit('new_notification', notification_doc['message'], room=recipient_user_id)
 
-    return jsonify({"message": "Chat request sent successfully"}), 201
+    socketio.emit(
+        "new_notification",
+        notification_doc["message"],
+        room=recipient_user_id
+    )
 
+    print("\n✅ Chat Request Sent Successfully")
 
+    return jsonify({
+        "message": "Chat request sent successfully"
+    }), 201
 @chat_api.route("/chat-requests/<request_id>/<action>", methods=["POST"])
 @token_required
 def respond_to_chat_request(current_user, request_id, action):
@@ -145,7 +205,16 @@ def get_user_chats(current_user):
             other_user = users_collection.find_one({"_id": other_member_id})
             if other_user:
                 room_name = other_user.get('name', other_member_id)
-        active_chats.append({"id": str(room['_id']), "name": room_name})
+        last_message = messages_collection.find_one(
+        {"room_id": room["_id"]},
+        sort=[("created_at", -1)]
+    )
+
+        active_chats.append({
+            "room_id": str(room["_id"]),
+            "recipient_name": room_name,
+            "last_message": last_message["text"] if last_message else "Start chatting..."
+        })
 
     pending_requests_cursor = chat_requests_collection.find({
         "recipient_id": user_id,
@@ -160,7 +229,11 @@ def get_user_chats(current_user):
             "id": str(req['_id']),
             "sender_name": sender_name
         })
+    print("\n========== ACTIVE CHATS ==========")
+    print(active_chats)
 
+    print("\n========== PENDING REQUESTS ==========")
+    print(pending_requests)
     return jsonify({
         "active_chats": active_chats,
         "pending_requests": pending_requests

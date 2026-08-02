@@ -12,3 +12,5 @@ sentence_transformers==5.6.1
 streamlit==1.60.0
 Werkzeug==3.1.8
 python-dotenv==1.2.2
+transformers>=4.40.0
+torch>=2.2.0

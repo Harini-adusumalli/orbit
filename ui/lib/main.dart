@@ -6,7 +6,7 @@ import 'package:orbit/screens/login_screen.dart';
 import 'dart:io';
 import 'package:desktop_window/desktop_window.dart';
 import 'package:orbit/screens/main_shell.dart';
-
+import 'package:orbit/theme/app_theme.dart';
 final AuthManager authManager = AuthManager();
 
 void main() async {
@@ -36,21 +36,7 @@ class MyApp extends StatelessWidget {
         return MaterialApp(
           title: 'Orbit',
           debugShowCheckedModeBanner: false,
-          theme: ThemeData(
-            brightness: Brightness.light,
-            primaryColor: const Color(0xFF03DAC6),
-            scaffoldBackgroundColor: const Color(0xFFFDFBD4), // Main app background color
-            cardColor: const Color(0xFF1E1E1E),
-            colorScheme: const ColorScheme.light(
-              primary: Color(0xFF03DAC6),
-              secondary: Color(0xFFBB86FC),
-              surface: Color(0xFF1E1E1E),
-              onPrimary: Colors.black,
-            ),
-            textSelectionTheme: const TextSelectionThemeData(
-              cursorColor: Colors.black,
-            ),
-          ),
+          theme: AppTheme.lightTheme,
           home: authManager.isLoggedIn ? const MainShell() : const LoginScreen(),
         );
       },

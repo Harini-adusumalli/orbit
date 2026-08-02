@@ -1,26 +1,45 @@
 // lib/screens/announce_event_screen.dart
+
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
 import 'package:orbit/services/api_service.dart';
-import 'package:intl/intl.dart'; // Package for date/time formatting
+import 'package:orbit/theme/app_colors.dart';
+import 'package:orbit/theme/app_text_styles.dart';
 
 class AnnounceEventScreen extends StatefulWidget {
   const AnnounceEventScreen({super.key});
 
   @override
-  State<AnnounceEventScreen> createState() => _AnnounceEventScreenState();
+  State<AnnounceEventScreen> createState() =>
+      _AnnounceEventScreenState();
 }
 
-class _AnnounceEventScreenState extends State<AnnounceEventScreen> {
-  final _formKey = GlobalKey<FormState>();
-  final _titleController = TextEditingController();
-  final _descriptionController = TextEditingController();
-  final _dateController = TextEditingController();
-  // --- NEW CONTROLLERS ---
-  final _speakerController = TextEditingController();
-  final _venueController = TextEditingController();
+class _AnnounceEventScreenState
+    extends State<AnnounceEventScreen> {
 
-  final ApiService _apiService = ApiService();
+  final _formKey =
+      GlobalKey<FormState>();
+
+  final _titleController =
+      TextEditingController();
+
+  final _descriptionController =
+      TextEditingController();
+
+  final _dateController =
+      TextEditingController();
+
+  final _speakerController =
+      TextEditingController();
+
+  final _venueController =
+      TextEditingController();
+
+  final ApiService _apiService =
+      ApiService();
+
   bool _isLoading = false;
+
   DateTime? _selectedDate;
 
   @override
@@ -34,123 +53,291 @@ class _AnnounceEventScreenState extends State<AnnounceEventScreen> {
   }
 
   Future<void> _pickDateTime() async {
-    // --- UPDATED: Now picks date AND time ---
-    DateTime? date = await showDatePicker(
+    DateTime? date =
+        await showDatePicker(
       context: context,
       initialDate: DateTime.now(),
       firstDate: DateTime.now(),
       lastDate: DateTime(2101),
     );
 
-    if (date == null) return; // User canceled date picker
+    if (date == null) return;
 
-    TimeOfDay? time = await showTimePicker(
+    TimeOfDay? time =
+        await showTimePicker(
       context: context,
-      initialTime: TimeOfDay.fromDateTime(DateTime.now()),
+      initialTime:
+          TimeOfDay.now(),
     );
 
     if (time != null) {
-      _selectedDate = DateTime(date.year, date.month, date.day, time.hour, time.minute);
+      _selectedDate =
+          DateTime(
+        date.year,
+        date.month,
+        date.day,
+        time.hour,
+        time.minute,
+      );
+
       setState(() {
-        // Format the date and time for display
-        _dateController.text = DateFormat('yyyy-MM-dd – hh:mm a').format(_selectedDate!);
+        _dateController.text =
+            DateFormat(
+          'dd MMM yyyy • hh:mm a',
+        ).format(
+          _selectedDate!,
+        );
       });
     }
   }
 
   Future<void> _submitEvent() async {
-    if (_formKey.currentState!.validate()) {
-      setState(() => _isLoading = true);
-      try {
-        // In a real app, you would send all the new fields to the API
-        // For the video, we'll just pretend it's working
-        // final response = await _apiService.createEvent(
-        //   _titleController.text,
-        //   _descriptionController.text,
-        //   _selectedDate!.toIso8601String(), // Send the full date and time
-        //   _speakerController.text,
-        //   _venueController.text,
-        // );
-        await Future.delayed(const Duration(seconds: 1)); // Simulate network call
+    if (!_formKey.currentState!
+        .validate()) {
+      return;
+    }
 
-        if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Event announced successfully!'), backgroundColor: Colors.green),
-          );
-          Navigator.of(context).pop();
-        }
-      } catch (e) {
-        if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text('Error: $e'), backgroundColor: Colors.red),
-          );
-        }
-      } finally {
-        if (mounted) {
-          setState(() => _isLoading = false);
-        }
-      }
+    setState(() {
+      _isLoading = true;
+    });
+
+    try {
+      // TODO:
+      // await _apiService.createEvent(...);
+
+      await Future.delayed(
+        const Duration(
+          seconds: 1,
+        ),
+      );
+
+      if (!mounted) return;
+
+      ScaffoldMessenger.of(
+              context)
+          .showSnackBar(
+        const SnackBar(
+          content: Text(
+            "Event announced successfully!",
+          ),
+          backgroundColor:
+              AppColors.success,
+        ),
+      );
+
+      Navigator.pop(context);
+    } catch (e) {
+      if (!mounted) return;
+
+      ScaffoldMessenger.of(
+              context)
+          .showSnackBar(
+        SnackBar(
+          content: Text(
+            e.toString(),
+          ),
+          backgroundColor:
+              AppColors.error,
+        ),
+      );
+    }
+
+    if (mounted) {
+      setState(() {
+        _isLoading = false;
+      });
     }
   }
 
+  Widget _buildField({
+    required TextEditingController
+        controller,
+    required String label,
+    required IconData icon,
+    bool readOnly = false,
+    VoidCallback? onTap,
+    int maxLines = 1,
+  }) {
+    return Padding(
+      padding:
+          const EdgeInsets.only(
+        bottom: 18,
+      ),
+      child: TextFormField(
+        controller: controller,
+        readOnly: readOnly,
+        onTap: onTap,
+        maxLines: maxLines,
+        decoration:
+            InputDecoration(
+          labelText: label,
+          prefixIcon: Icon(
+            icon,
+            color:
+                AppColors.primary,
+          ),
+        ),
+        validator: (value) {
+          if (value == null ||
+              value.trim().isEmpty) {
+            return "Please enter $label";
+          }
+          return null;
+        },
+      ),
+    );
+  }
+
   @override
-  Widget build(BuildContext context) {
+  Widget build(
+      BuildContext context) {
+
     return Scaffold(
-      appBar: AppBar(title: const Text('Announce New Event')),
+      backgroundColor:
+          AppColors.background,
+
+      appBar: AppBar(
+        title: const Text(
+          "Announce Event",
+        ),
+      ),
+
       body: SingleChildScrollView(
-        padding: const EdgeInsets.all(24.0),
-        child: Form(
-          key: _formKey,
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              TextFormField(
-                controller: _titleController,
-                decoration: const InputDecoration(labelText: 'Event Title', prefixIcon: Icon(Icons.title)),
-                validator: (v) => v!.isEmpty ? 'Please enter a title' : null,
+        padding:
+            const EdgeInsets.all(
+                20),
+
+        child: Card(
+          color: AppColors.card,
+          elevation: 2,
+
+          child: Padding(
+            padding:
+                const EdgeInsets.all(
+                    20),
+
+            child: Form(
+              key: _formKey,
+
+              child: Column(
+                crossAxisAlignment:
+                    CrossAxisAlignment
+                        .stretch,
+
+                children: [
+
+                  Text(
+                    "Create New Event",
+                    style:
+                        AppTextStyles
+                            .heading,
+                    textAlign:
+                        TextAlign.center,
+                  ),
+
+                  const SizedBox(
+                      height: 10),
+
+                  Text(
+                    "Publish a workshop, seminar or alumni event.",
+                    style:
+                        AppTextStyles
+                            .subtitle,
+                    textAlign:
+                        TextAlign.center,
+                  ),
+
+                  const SizedBox(
+                      height: 30),
+
+                  _buildField(
+                    controller:
+                        _titleController,
+                    label:
+                        "Event Title",
+                    icon:
+                        Icons.title,
+                  ),
+
+                  _buildField(
+                    controller:
+                        _speakerController,
+                    label:
+                        "Speaker",
+                    icon: Icons.person,
+                  ),
+
+                  _buildField(
+                    controller:
+                        _venueController,
+                    label:
+                        "Venue",
+                    icon: Icons.location_on,
+                  ),
+
+                  _buildField(
+                    controller:
+                        _descriptionController,
+                    label:
+                        "Description",
+                    icon:
+                        Icons.notes,
+                    maxLines: 4,
+                  ),
+
+                  _buildField(
+                    controller:
+                        _dateController,
+                    label:
+                        "Date & Time",
+                    icon:
+                        Icons.event,
+                    readOnly: true,
+                    onTap:
+                        _pickDateTime,
+                  ),
+
+                  const SizedBox(
+                      height: 30),
+
+                  SizedBox(
+                    height: 52,
+                    child:
+                        FilledButton.icon(
+                      onPressed:
+                          _isLoading
+                              ? null
+                              : _submitEvent,
+
+                      icon: _isLoading
+                          ? const SizedBox(
+                              width:
+                                  18,
+                              height:
+                                  18,
+                              child:
+                                  CircularProgressIndicator(
+                                strokeWidth:
+                                    2,
+                                color: Colors
+                                    .white,
+                              ),
+                            )
+                          : const Icon(
+                              Icons
+                                  .campaign,
+                            ),
+
+                      label: Text(
+                        _isLoading
+                            ? "Publishing..."
+                            : "Announce Event",
+                      ),
+                    ),
+                  ),
+                ],
               ),
-              const SizedBox(height: 20),
-              // --- NEW FIELD: Speaker ---
-              TextFormField(
-                controller: _speakerController,
-                decoration: const InputDecoration(labelText: 'Speaker Name', prefixIcon: Icon(Icons.person_outline)),
-                validator: (v) => v!.isEmpty ? 'Please enter a speaker name' : null,
-              ),
-              const SizedBox(height: 20),
-              // --- NEW FIELD: Venue ---
-              TextFormField(
-                controller: _venueController,
-                decoration: const InputDecoration(labelText: 'Venue / Location', prefixIcon: Icon(Icons.location_on_outlined)),
-                validator: (v) => v!.isEmpty ? 'Please enter a venue' : null,
-              ),
-              const SizedBox(height: 20),
-              TextFormField(
-                controller: _descriptionController,
-                decoration: const InputDecoration(labelText: 'Event Description', prefixIcon: Icon(Icons.notes)),
-                maxLines: 4,
-                validator: (v) => v!.isEmpty ? 'Please enter a description' : null,
-              ),
-              const SizedBox(height: 20),
-              TextFormField(
-                controller: _dateController,
-                decoration: const InputDecoration(
-                  labelText: 'Event Date & Time',
-                  prefixIcon: Icon(Icons.calendar_today),
-                ),
-                readOnly: true,
-                onTap: _pickDateTime, // Updated function to pick time as well
-                validator: (v) => v!.isEmpty ? 'Please select a date and time' : null,
-              ),
-              const SizedBox(height: 40),
-              if (_isLoading)
-                const Center(child: CircularProgressIndicator())
-              else
-                ElevatedButton(
-                  onPressed: _submitEvent,
-                  style: ElevatedButton.styleFrom(padding: const EdgeInsets.symmetric(vertical: 16)),
-                  child: const Text('Announce Event'),
-                ),
-            ],
+            ),
           ),
         ),
       ),

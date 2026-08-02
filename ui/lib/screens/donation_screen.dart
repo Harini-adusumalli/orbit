@@ -1,7 +1,10 @@
 // lib/screens/donation_screen.dart
-import 'package:flutter/material.dart';
 
-// TODO: Replace with a real Donation model from your backend response
+import 'package:flutter/material.dart';
+import 'package:orbit/theme/app_colors.dart';
+import 'package:orbit/theme/app_text_styles.dart';
+
+// TODO: Replace with real Donation model
 class Donation {
   final String id;
   final double amount;
@@ -19,125 +22,252 @@ class Donation {
 class DonationScreen extends StatelessWidget {
   const DonationScreen({super.key});
 
-  // TODO: Fetch real donation history from your /api/donations endpoint
   static final List<Donation> _donations = [
-    Donation(id: '1', amount: 50.00, date: DateTime.now().subtract(const Duration(days: 30)), campaign: 'Annual Fund 2024'),
-    Donation(id: '2', amount: 100.00, date: DateTime.now().subtract(const Duration(days: 120)), campaign: 'Scholarship Drive'),
+    Donation(
+      id: '1',
+      amount: 50,
+      date: DateTime.now().subtract(
+        const Duration(days: 30),
+      ),
+      campaign: 'Annual Fund 2024',
+    ),
+    Donation(
+      id: '2',
+      amount: 100,
+      date: DateTime.now().subtract(
+        const Duration(days: 120),
+      ),
+      campaign: 'Scholarship Drive',
+    ),
   ];
 
-  void _showMakeDonationDialog(BuildContext context) {
-    final amountController = TextEditingController();
+  void _showDonationDialog(
+      BuildContext context) {
+    final controller =
+        TextEditingController();
+
     showDialog(
       context: context,
-      builder: (context) {
-        return AlertDialog(
-          title: const Text('Make a Donation'),
-          content: TextField(
-            controller: amountController,
-            keyboardType: const TextInputType.numberWithOptions(decimal: true),
-            decoration: const InputDecoration(
-              labelText: 'Amount (\$)',
-              prefixIcon: Icon(Icons.attach_money),
+      builder: (_) => AlertDialog(
+        backgroundColor:
+            AppColors.card,
+        title: Text(
+          "Make a Donation",
+          style: AppTextStyles.title,
+        ),
+        content: TextField(
+          controller: controller,
+          keyboardType:
+              const TextInputType
+                  .numberWithOptions(
+            decimal: true,
+          ),
+          decoration:
+              const InputDecoration(
+            labelText: "Amount",
+            prefixIcon:
+                Icon(Icons.currency_rupee),
+          ),
+        ),
+        actions: [
+
+          TextButton(
+            onPressed: () =>
+                Navigator.pop(context),
+            child: const Text(
+              "Cancel",
             ),
           ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.of(context).pop(),
-              child: const Text('Cancel'),
-            ),
-            FilledButton(
-              onPressed: () {
-                // TODO: Implement API call to POST /api/donations
-                // final amount = double.tryParse(amountController.text);
-                Navigator.of(context).pop();
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(
-                    content: Text('Thank you for your generous donation!'),
-                    backgroundColor: Colors.green,
+
+          FilledButton(
+            onPressed: () {
+              Navigator.pop(context);
+
+              ScaffoldMessenger.of(
+                      context)
+                  .showSnackBar(
+                const SnackBar(
+                  content: Text(
+                    "Thank you for your donation!",
                   ),
-                );
-              },
-              child: const Text('Donate'),
+                  backgroundColor:
+                      AppColors.success,
+                ),
+              );
+            },
+            child: const Text(
+              "Donate",
             ),
-          ],
-        );
-      },
+          ),
+        ],
+      ),
     );
   }
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    
+
     return Scaffold(
+      backgroundColor:
+          AppColors.background,
+
       appBar: AppBar(
-        title: const Text('My Donations'),
+        title: const Text(
+          "Donations",
+        ),
       ),
+
       body: Padding(
-        padding: const EdgeInsets.all(16.0),
+        padding:
+            const EdgeInsets.all(16),
+
         child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
+          crossAxisAlignment:
+              CrossAxisAlignment
+                  .stretch,
+
           children: [
-            // --- Make a Donation Card ---
+
             Card(
-              elevation: 4,
-              color: theme.colorScheme.primaryContainer,
+              color: AppColors.card,
+              elevation: 2,
+
               child: Padding(
-                padding: const EdgeInsets.all(20.0),
+                padding:
+                    const EdgeInsets
+                        .all(20),
+
                 child: Column(
                   children: [
-                    Text(
-                      'Support Our Institution',
-                      style: theme.textTheme.headlineMedium?.copyWith(
-                        color: theme.colorScheme.onPrimaryContainer,
-                      ),
-                      textAlign: TextAlign.center,
+
+                    const Icon(
+                      Icons
+                          .volunteer_activism,
+                      color:
+                          AppColors.primary,
+                      size: 50,
                     ),
-                    const SizedBox(height: 8),
+
+                    const SizedBox(
+                        height: 16),
+
                     Text(
-                      'Your contributions help fund scholarships and campus development.',
-                       style: theme.textTheme.bodyLarge?.copyWith(
-                        color: theme.colorScheme.onPrimaryContainer.withOpacity(0.8),
-                      ),
-                      textAlign: TextAlign.center,
+                      "Support Our Institution",
+                      style:
+                          AppTextStyles
+                              .heading,
+                      textAlign:
+                          TextAlign
+                              .center,
                     ),
-                    const SizedBox(height: 20),
-                    ElevatedButton(
-                      onPressed: () => _showMakeDonationDialog(context),
-                      child: const Text('Make a Donation'),
+
+                    const SizedBox(
+                        height: 10),
+
+                    Text(
+                      "Your contribution helps fund scholarships, campus improvements and student activities.",
+                      style:
+                          AppTextStyles
+                              .body,
+                      textAlign:
+                          TextAlign
+                              .center,
+                    ),
+
+                    const SizedBox(
+                        height: 20),
+
+                    FilledButton.icon(
+                      icon: const Icon(
+                        Icons
+                            .currency_rupee,
+                      ),
+                      label: const Text(
+                        "Donate Now",
+                      ),
+                      onPressed: () =>
+                          _showDonationDialog(
+                              context),
                     ),
                   ],
                 ),
               ),
             ),
-            const SizedBox(height: 24),
-            Text(
-              'Donation History',
-              style: theme.textTheme.headlineSmall,
-            ),
-            const Divider(height: 24),
 
-            // --- Donation History List ---
+            const SizedBox(height: 25),
+
+            Text(
+              "Donation History",
+              style:
+                  AppTextStyles
+                      .subHeading,
+            ),
+
+            const SizedBox(height: 15),
+
             Expanded(
-              child: _donations.isEmpty
-                  ? const Center(child: Text('You have not made any donations yet.'))
-                  : ListView.builder(
-                      itemCount: _donations.length,
-                      itemBuilder: (context, index) {
-                        final donation = _donations[index];
-                        return ListTile(
-                          leading: const CircleAvatar(child: Icon(Icons.favorite)),
-                          title: Text(
-                            '\$${donation.amount.toStringAsFixed(2)}',
-                            style: const TextStyle(fontWeight: FontWeight.bold),
-                          ),
-                          subtitle: Text(donation.campaign),
-                          trailing: Text(
-                             '${donation.date.day}/${donation.date.month}/${donation.date.year}',
-                          ),
-                        );
-                      },
+              child: ListView.builder(
+                itemCount:
+                    _donations.length,
+
+                itemBuilder:
+                    (_, index) {
+
+                  final donation =
+                      _donations[
+                          index];
+
+                  return Card(
+                    color:
+                        AppColors
+                            .card,
+                    margin:
+                        const EdgeInsets
+                            .only(
+                      bottom: 14,
                     ),
+
+                    child: ListTile(
+
+                      leading:
+                          CircleAvatar(
+                        backgroundColor:
+                            AppColors
+                                .primary,
+
+                        child:
+                            const Icon(
+                          Icons.favorite,
+                          color: Colors
+                              .white,
+                        ),
+                      ),
+
+                      title: Text(
+                        "₹${donation.amount.toStringAsFixed(0)}",
+                        style:
+                            AppTextStyles
+                                .title,
+                      ),
+
+                      subtitle: Text(
+                        donation
+                            .campaign,
+                        style:
+                            AppTextStyles
+                                .body,
+                      ),
+
+                      trailing: Text(
+                        "${donation.date.day}/${donation.date.month}/${donation.date.year}",
+                        style:
+                            AppTextStyles
+                                .subtitle,
+                      ),
+                    ),
+                  );
+                },
+              ),
             ),
           ],
         ),
