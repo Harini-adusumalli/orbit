@@ -8,7 +8,7 @@ users = db["users"]
 
 # Target user
 rollno = "B2-AU-0007"
-new_password = "harini"
+new_password = "your_password_here"  # Replace with the desired new password
 new_hash = generate_password_hash(new_password, method='pbkdf2:sha256')
 
 result = users.update_one({"rollno": rollno}, {"$set": {"password": new_hash}})
