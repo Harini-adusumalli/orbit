@@ -7,7 +7,23 @@ from gemini_client import query_gemini
 import json
 import re
 import textwrap
-
+# ---------------- Password Validation ----------------
+def is_strong_password(password):
+    """
+    Password must contain:
+    - At least 8 characters
+    - One uppercase letter
+    - One lowercase letter
+    - One digit
+    - One special character
+    """
+    return (
+        len(password) >= 8
+        and re.search(r"[A-Z]", password)
+        and re.search(r"[a-z]", password)
+        and re.search(r"\d", password)
+        and re.search(r"[!@#$%^&*(),.?\":{}|<>]", password)
+    )
 # --- NEW IMPORTS for security and JWTs ---
 from werkzeug.security import generate_password_hash, check_password_hash
 from config import SECRET_KEY  # Import the secret key from our new auth file
@@ -128,21 +144,38 @@ def chat_route():
 @routes.route("/signup", methods=["POST"])
 def signup():
     data = request.get_json()
+
     rollno = data.get("rollno")
     password = data.get("password")
     role = data.get("role")
 
     if not all([rollno, password, role]):
-        return jsonify({"error": "Roll number, password, and role are required"}), 400
+        return jsonify({
+            "error": "Roll number, password, and role are required"
+        }), 400
 
-    # Convert roll number to lowercase for consistency
-    rollno_lower = rollno.lower()
+    # -------- Password Strength Validation --------
+    if not is_strong_password(password):
+        return jsonify({
+            "error": "Password must be at least 8 characters long and contain at least one uppercase letter, one lowercase letter, one number, and one special character."
+        }), 400
 
+    # Normalize roll number
+    rollno_lower = rollno.strip().lower()
+
+    # Check if user already exists
     if users_collection.find_one({"_id": rollno_lower}):
-        return jsonify({"error": "User with this roll number already exists"}), 409
+        return jsonify({
+            "error": "User with this roll number already exists"
+        }), 409
 
-    hashed_password = generate_password_hash(password, method='pbkdf2:sha256')
+    # Hash the password
+    hashed_password = generate_password_hash(
+        password,
+        method="pbkdf2:sha256"
+    )
 
+    # Store user
     users_collection.insert_one({
         "_id": rollno_lower,
         "rollno": rollno_lower,
@@ -150,8 +183,9 @@ def signup():
         "role": role
     })
 
-    return jsonify({"message": f"{role.capitalize()} registered successfully"}), 201
-
+    return jsonify({
+        "message": f"{role.capitalize()} registered successfully"
+    }), 201
 
 # --- UPDATED /login route ---
 # --- CORRECTED /login route ---
