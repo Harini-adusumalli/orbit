@@ -23,9 +23,32 @@ class _SignupScreenState extends State<SignupScreen> {
 
   bool _isLoading = false;
   String? _errorMessage;
+  bool _obscurePassword = true;
 
+  bool get _hasMinLength =>
+    _passwordController.text.length >= 8;
+
+  bool get _hasUppercase =>
+    RegExp(r'[A-Z]').hasMatch(_passwordController.text);
+
+  bool get _hasLowercase =>
+    RegExp(r'[a-z]').hasMatch(_passwordController.text);
+
+  bool get _hasNumber =>
+    RegExp(r'[0-9]').hasMatch(_passwordController.text);
+
+  bool get _hasSpecial =>
+    RegExp(r'[!@#$%^&*(),.?":{}|<>]')
+        .hasMatch(_passwordController.text);
   String _selectedRole = "student";
+  @override
+  void initState() {
+    super.initState();
 
+    _passwordController.addListener(() {
+      setState(() {});
+    });
+  }
   @override
   void dispose() {
     _rollnoController.dispose();
@@ -79,7 +102,28 @@ class _SignupScreenState extends State<SignupScreen> {
       }
     }
   }
-
+  Widget _passwordRequirement(bool valid, String text) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 2),
+      child: Row(
+        children: [
+          Icon(
+            valid ? Icons.check_circle : Icons.radio_button_unchecked,
+            color: valid ? Colors.green : Colors.grey,
+            size: 18,
+          ),
+          const SizedBox(width: 8),
+          Text(
+            text,
+            style: TextStyle(
+              color: valid ? Colors.green : Colors.grey,
+              fontSize: 13,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -104,56 +148,126 @@ class _SignupScreenState extends State<SignupScreen> {
             ),
             child: Form(
               key: _formKey,
-              child: Column(
-                children: [
-                  Text(
-                    "Join Orbit",
-                    style: AppTextStyles.heading,
+              child: Center(
+                child: ConstrainedBox(
+                  constraints: const BoxConstraints(
+                    maxWidth: 450,
                   ),
-
-                  const SizedBox(height: 10),
-
-                  Text(
-                    "Create your account to start connecting.",
-                    style: AppTextStyles.subtitle,
-                    textAlign: TextAlign.center,
-                  ),
-
-                  const SizedBox(height: 35),
-
-                  TextFormField(
-                    controller: _rollnoController,
-                    decoration: const InputDecoration(
-                      labelText: "Roll Number / ID",
-                      prefixIcon:
-                          Icon(Icons.badge_outlined),
+                  child: Card(
+                    elevation: 8,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(20),
                     ),
-                    validator: (value) {
-                      if (value == null ||
-                          value.trim().isEmpty) {
-                        return "Enter your Roll Number";
-                      }
-                      return null;
-                    },
-                  ),
+                    child: Padding(
+                      padding: const EdgeInsets.all(24),
+                      child: Column( 
+                        mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Text(
+                              "Join Orbit",
+                              style: AppTextStyles.heading,
+                            ),
+
+                          const SizedBox(height: 10),
+
+                          Text(
+                            "Create your account to start connecting.",
+                            style: AppTextStyles.subtitle,
+                            textAlign: TextAlign.center,
+                          ),
+
+                            const SizedBox(height: 35),
+
+                            TextFormField(
+                              controller: _rollnoController,
+                              decoration: const InputDecoration(
+                                labelText: "Roll Number / ID",
+                                prefixIcon:
+                                    Icon(Icons.badge_outlined),
+                              ),
+                              validator: (value) {
+                                if (value == null ||
+                                    value.trim().isEmpty) {
+                                  return "Enter your Roll Number";
+                                }
+                                return null;
+                              },
+                            ),
 
                   const SizedBox(height: 18),
 
                   TextFormField(
                     controller: _passwordController,
-                    obscureText: true,
-                    decoration: const InputDecoration(
+                    obscureText: _obscurePassword,
+                    decoration: InputDecoration(
                       labelText: "Password",
-                      prefixIcon:
-                          Icon(Icons.lock_outline),
+                      prefixIcon: const Icon(Icons.lock_outline),
+                      suffixIcon: IconButton(
+                        icon: Icon(
+                          _obscurePassword
+                              ? Icons.visibility_off
+                              : Icons.visibility,
+                        ),
+                        onPressed: () {
+                          setState(() {
+                            _obscurePassword = !_obscurePassword;
+                          });
+                        },
+                      ),
                     ),
                     validator: (value) {
-                      if (value == null ||
-                          value.isEmpty) {
+                      if (value == null || value.isEmpty) {
                         return "Enter a Password";
                       }
                       return null;
                     },
+                  ),
+                  const SizedBox(height: 12),
+
+                  Container(
+                    width: double.infinity,
+                    padding: const EdgeInsets.all(14),
+                    decoration: BoxDecoration(
+                      color: Colors.grey.shade100,
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const Text(
+                          "Password Requirements",
+                          style: TextStyle(
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                        const SizedBox(height: 8),
+
+                        _passwordRequirement(
+                          _hasMinLength,
+                          "Minimum 8 characters",
+                        ),
+
+                        _passwordRequirement(
+                          _hasUppercase,
+                          "One uppercase letter",
+                        ),
+
+                        _passwordRequirement(
+                          _hasLowercase,
+                          "One lowercase letter",
+                        ),
+
+                        _passwordRequirement(
+                          _hasNumber,
+                          "One number",
+                        ),
+
+                        _passwordRequirement(
+                          _hasSpecial,
+                          "One special character",
+                        ),
+                      ],
+                    ),
                   ),
 
                   const SizedBox(height: 18),
@@ -233,11 +347,15 @@ class _SignupScreenState extends State<SignupScreen> {
                     ),
                   ),
                 ],
-              ),
-            ),
-          ),
-        ),
-      ),
-    );
-  }
+              ), // Column
+            ), // Padding
+          ), // Card
+        ), // ConstrainedBox
+      ), // Center
+    ), // Form
+  ), // SingleChildScrollView
+), // SafeArea
+),
+);
+}
 }
